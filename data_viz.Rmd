@@ -1,0 +1,78 @@
+---
+title: "viz_1"
+author: "Kimia Faroughi"
+date: "2025-09-25"
+output: github_document
+---
+
+```{r setup, echo = FALSE, message = FALSE}
+library(tidyverse)
+library(p8105.datasets)
+library(ggridges)
+```
+
+Import the weather data.
+
+```{r}
+data("weather_df")
+```
+
+Making our first plot :-)
+
+```{r}
+ggplot(data = weather_df, mapping = aes(x = tmin, y = tmax)) + 
+  geom_point() #ppl never write data = or mapping = arguments
+
+ggplot(weather_df, aes(x = tmin, y = tmax)) + 
+  geom_point()
+```
+
+```{r}
+weather_df |> #using pipe operator instead
+  ggplot(aes(x = tmin, y = tmax)) +
+  geom_point()
+```
+
+```{r}
+ggp_weather_scatterplot = 
+  weather_df |> 
+  ggplot(aes(x = tmin, y = tmax)) +
+  geom_point()
+
+ggp_weather_scatterplot #prints the plot
+```
+
+Check that some rows are missing.
+
+```{r}
+weather_df |> 
+  filter(is.na(tmax)) #lists na obs for tmax
+```
+
+## Fancier scatterplots!
+
+```{r}
+weather_df |> 
+  ggplot(aes(x = tmin, y = tmax, color = name)) + #gives different color for each name variable in dataset
+  geom_point(alpha = 0.3) + #makes points a little see through
+  geom_smooth(se = FALSE) #adds smooth lines for each subcategory and se = FALSE removes error bars (don't trust them)
+```
+
+Where you define aesthetics can matter.
+
+```{r}
+weather_df |> 
+  ggplot(aes(x = tmin, y = tmax)) +
+  geom_point(aes(color = name, size = prcp), alpha = 0.3) + #changes size of every point based on precipitation var
+  geom_smooth(se = FALSE)
+
+#produces only one smooth line (not divided by subcategory) because moved the aesthetic of color to geom_point rather than the main ggplot line
+#communicate one message at a time with one or two aesthetic mappings, don't need to include lots of different options because you want your "audience" to understand the plot
+```
+
+Use faceting. 
+
+```{r}
+
+```
+
