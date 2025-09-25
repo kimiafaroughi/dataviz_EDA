@@ -55,7 +55,7 @@ weather_df |>
 weather_df |> 
   ggplot(aes(x = tmin, y = tmax, color = name)) + #gives different color for each name variable in dataset
   geom_point(alpha = 0.3) + #makes points a little see through
-  geom_smooth(se = FALSE) #adds smooth lines for each subcategory and se = FALSE removes error bars (don't trust them)
+  geom_smooth(se = FALSE) #adds smooth lines for each subcategory and se = FALSE removes suspect error band (don't trust them)
 ```
 
 Where you define aesthetics can matter.
@@ -73,6 +73,40 @@ weather_df |>
 Use faceting. 
 
 ```{r}
+weather_df |> 
+  ggplot(aes(x = tmin, y = tmax)) +
+  geom_point(aes(color = name), alpha = 0.3, size = 0.8) +
+  geom_smooth(se = FALSE) +
+  facet_grid(. ~ name) #separates into different plots based on variable name (by column)
 
+weather_df |> 
+  ggplot(aes(x = tmin, y = tmax)) +
+  geom_point(aes(color = name), alpha = 0.3, size = 0.8) +
+  geom_smooth(se = FALSE) +
+  facet_grid(name ~ .) #separates into different plots based on variable name (by row)
+```
+
+Let's make a somewhat more interesting scatterplot.
+
+```{r}
+weather_df |> 
+  ggplot(aes(x = tmin, y = tmax, color = name, shape = name)) + #shape = name creates different shapes as the points based on variable name
+  geom_point(aes(size = prcp), alpha = 0.3) +
+  geom_smooth(se = FALSE) +
+  facet_grid(. ~ name)
+```
+
+Learning Assessment
+
+```{r}
+weather_df |> 
+  filter(name == "CentralPark_NY") |> 
+  mutate(
+    tmax_F = (tmax * (9/5)) + 32,
+    tmin_F = (tmin * (9/5)) + 32
+  ) |> 
+  ggplot(aes(x = tmin_F, y = tmax_F)) +
+  geom_point() +
+  geom_smooth(se = FALSE, method = "lm") #adds linear regression line
 ```
 
