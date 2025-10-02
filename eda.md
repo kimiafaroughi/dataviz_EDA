@@ -223,3 +223,130 @@ weather_df |>
 | 2022-10-01 |          17.43 |      29.22 |        11.88 |
 | 2022-11-01 |          14.02 |      27.96 |         2.14 |
 | 2022-12-01 |           6.76 |      27.35 |        -0.46 |
+
+## Mutate with groups
+
+``` r
+weather_df |> 
+  group_by(name) |> 
+  mutate(
+    mean_tmax = mean(tmax, na.rm = TRUE), #computation and var added) affected by grouping structure
+    center_tmax = tmax - mean_tmax
+  ) |> 
+  ggplot(aes(x = date, y = center_tmax, color = name)) +
+  geom_point()
+```
+
+    ## Warning: Removed 17 rows containing missing values or values outside the scale range
+    ## (`geom_point()`).
+
+<img src="eda_files/figure-gfm/unnamed-chunk-12-1.png" width="90%" />
+
+Look for cold days.
+
+``` r
+weather_df |> 
+  group_by(name, month) |> 
+  mutate(temp_rank = min_rank(tmax)) |> #ranks by minimum amount by name and month
+  filter(temp_rank < 2)
+```
+
+    ## # A tibble: 92 × 8
+    ## # Groups:   name, month [72]
+    ##    name           id          date        prcp  tmax  tmin month      temp_rank
+    ##    <chr>          <chr>       <date>     <dbl> <dbl> <dbl> <date>         <int>
+    ##  1 CentralPark_NY USW00094728 2021-01-29     0  -3.8  -9.9 2021-01-01         1
+    ##  2 CentralPark_NY USW00094728 2021-02-08     0  -1.6  -8.2 2021-02-01         1
+    ##  3 CentralPark_NY USW00094728 2021-03-02     0   0.6  -6   2021-03-01         1
+    ##  4 CentralPark_NY USW00094728 2021-04-02     0   3.9  -2.1 2021-04-01         1
+    ##  5 CentralPark_NY USW00094728 2021-05-29   117  10.6   8.3 2021-05-01         1
+    ##  6 CentralPark_NY USW00094728 2021-05-30   226  10.6   8.3 2021-05-01         1
+    ##  7 CentralPark_NY USW00094728 2021-06-11     0  20.6  16.7 2021-06-01         1
+    ##  8 CentralPark_NY USW00094728 2021-06-12     0  20.6  16.7 2021-06-01         1
+    ##  9 CentralPark_NY USW00094728 2021-07-03    86  18.9  15   2021-07-01         1
+    ## 10 CentralPark_NY USW00094728 2021-08-04     0  24.4  19.4 2021-08-01         1
+    ## # ℹ 82 more rows
+
+What about lags?
+
+``` r
+weather_df |> 
+  group_by(name) |> 
+  mutate(lagged_tmax = lag(tmax))
+```
+
+    ## # A tibble: 2,190 × 8
+    ## # Groups:   name [3]
+    ##    name           id         date        prcp  tmax  tmin month      lagged_tmax
+    ##    <chr>          <chr>      <date>     <dbl> <dbl> <dbl> <date>           <dbl>
+    ##  1 CentralPark_NY USW000947… 2021-01-01   157   4.4   0.6 2021-01-01        NA  
+    ##  2 CentralPark_NY USW000947… 2021-01-02    13  10.6   2.2 2021-01-01         4.4
+    ##  3 CentralPark_NY USW000947… 2021-01-03    56   3.3   1.1 2021-01-01        10.6
+    ##  4 CentralPark_NY USW000947… 2021-01-04     5   6.1   1.7 2021-01-01         3.3
+    ##  5 CentralPark_NY USW000947… 2021-01-05     0   5.6   2.2 2021-01-01         6.1
+    ##  6 CentralPark_NY USW000947… 2021-01-06     0   5     1.1 2021-01-01         5.6
+    ##  7 CentralPark_NY USW000947… 2021-01-07     0   5    -1   2021-01-01         5  
+    ##  8 CentralPark_NY USW000947… 2021-01-08     0   2.8  -2.7 2021-01-01         5  
+    ##  9 CentralPark_NY USW000947… 2021-01-09     0   2.8  -4.3 2021-01-01         2.8
+    ## 10 CentralPark_NY USW000947… 2021-01-10     0   5    -1.6 2021-01-01         2.8
+    ## # ℹ 2,180 more rows
+
+Use the variables you create
+
+``` r
+weather_df |> 
+  group_by(name) |> 
+  mutate(
+    temp_change = tmax - lag(tmax)
+  ) |> 
+  summarize(
+    sd_tmax_change = sd(temp_change, na.rm = TRUE),
+    tmax_change_max = max(temp_change, na.rm = TRUE)
+  )
+```
+
+    ## # A tibble: 3 × 3
+    ##   name           sd_tmax_change tmax_change_max
+    ##   <chr>                   <dbl>           <dbl>
+    ## 1 CentralPark_NY           4.43            12.2
+    ## 2 Molokai_HI               1.24             5.6
+    ## 3 Waterhole_WA             3.04            11.1
+
+``` r
+pulse_df = 
+  haven::read_sas("data/public_pulse_data.sas7bdat") |> 
+  janitor::clean_names() |> 
+  pivot_longer(
+    bdi_score_bl:bdi_score_12m,
+    names_to = "visit",
+    names_prefix = "bdi_score_",
+    values_to = "bdi"
+  ) |> 
+  mutate(visit = fct_inorder(visit)) #puts visit values in order they appear in dataset 
+
+pulse_df |> 
+  ggplot(aes(x = visit, y = bdi)) +
+  geom_boxplot()
+```
+
+    ## Warning: Removed 879 rows containing non-finite outside the scale range
+    ## (`stat_boxplot()`).
+
+<img src="eda_files/figure-gfm/unnamed-chunk-16-1.png" width="90%" />
+
+``` r
+pulse_df |> 
+  group_by(visit) |> 
+  summarize(
+    mean_bdi = mean(bdi, na.rm = TRUE),
+    median_bdi = median(bdi, na.rm = TRUE)
+  ) |> 
+  knitr::kable(digits = 2)
+```
+
+| visit | mean_bdi | median_bdi |
+|:------|---------:|-----------:|
+| bl    |     7.99 |          6 |
+| 01m   |     6.05 |          4 |
+| 06m   |     5.67 |          4 |
+| 12m   |     6.10 |          4 |
